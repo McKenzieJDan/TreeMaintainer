@@ -1,0 +1,5 @@
+name: TreeMaintainer
+version: 1.0
+main: io.mckenz.treemaintainer.TreeMaintainer
+api-version: 1.21
+description: Automatically replants trees and removes floating trees 
