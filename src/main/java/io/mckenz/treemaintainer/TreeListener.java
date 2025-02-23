@@ -50,31 +50,44 @@ public class TreeListener implements Listener {
         if (!LOGS.contains(block.getType())) {
             return;
         }
+        plugin.getLogger().info("Log block broken: " + block.getType());
 
-        // Check if it's part of a tree (has leaves above)
+        // Find the bottom-most log of this tree
+        Block bottom = findBottomLog(block);
+        
+        // Check if it's part of a tree (has leaves nearby)
         if (!isPartOfTree(block)) {
+            plugin.getLogger().info("Not part of tree - no leaves found nearby");
             return;
         }
+        plugin.getLogger().info("Tree detected - replanting sapling at bottom");
 
         // Schedule the replanting task
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            replantSapling(block);
+            replantSapling(bottom);
             removeFloatingTree(block);
         }, 2L);
     }
 
+    private Block findBottomLog(Block start) {
+        Block current = start;
+        while (LOGS.contains(current.getRelative(BlockFace.DOWN).getType())) {
+            current = current.getRelative(BlockFace.DOWN);
+        }
+        return current;
+    }
+
     private boolean isPartOfTree(Block block) {
-        Block above = block.getRelative(BlockFace.UP);
-        int checkHeight = 0;
-        while (checkHeight < 20) { // Check up to 20 blocks high
-            if (LEAVES.contains(above.getType())) {
-                return true;
+        // Check in a radius around the block for leaves
+        for (int y = -2; y <= 4; y++) {
+            for (int x = -2; x <= 2; x++) {
+                for (int z = -2; z <= 2; z++) {
+                    Block relative = block.getRelative(x, y, z);
+                    if (LEAVES.contains(relative.getType())) {
+                        return true;
+                    }
+                }
             }
-            if (!LOGS.contains(above.getType())) {
-                break;
-            }
-            above = above.getRelative(BlockFace.UP);
-            checkHeight++;
         }
         return false;
     }
