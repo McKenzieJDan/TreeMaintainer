@@ -1,13 +1,20 @@
-package io.mckenz.treemaintainer; 
+package io.mckenz.treemaintainer;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
-public class TreeListener {
+public class TreeListener implements Listener {
     private final TreeMaintainer plugin;
     private final List<Material> LOGS = new ArrayList<>();
     private final List<Material> LEAVES = new ArrayList<>();
@@ -33,6 +40,43 @@ public class TreeListener {
         LEAVES.add(Material.DARK_OAK_LEAVES);
         LEAVES.add(Material.MANGROVE_LEAVES);
         LEAVES.add(Material.CHERRY_LEAVES);
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+        
+        // Check if the broken block is a log
+        if (!LOGS.contains(block.getType())) {
+            return;
+        }
+
+        // Check if it's part of a tree (has leaves above)
+        if (!isPartOfTree(block)) {
+            return;
+        }
+
+        // Schedule the replanting task
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            replantSapling(block);
+            removeFloatingTree(block);
+        }, 2L);
+    }
+
+    private boolean isPartOfTree(Block block) {
+        Block above = block.getRelative(BlockFace.UP);
+        int checkHeight = 0;
+        while (checkHeight < 20) { // Check up to 20 blocks high
+            if (LEAVES.contains(above.getType())) {
+                return true;
+            }
+            if (!LOGS.contains(above.getType())) {
+                break;
+            }
+            above = above.getRelative(BlockFace.UP);
+            checkHeight++;
+        }
+        return false;
     }
 
     private void replantSapling(Block block) {
@@ -70,5 +114,69 @@ public class TreeListener {
             }
             block.setType(sapling);
         }
+    }
+
+    private void removeFloatingTree(Block startBlock) {
+        Queue<Block> blocksToCheck = new LinkedList<>();
+        Set<Block> checkedBlocks = new HashSet<>();
+        blocksToCheck.add(startBlock);
+
+        while (!blocksToCheck.isEmpty()) {
+            Block current = blocksToCheck.poll();
+            if (checkedBlocks.contains(current)) {
+                continue;
+            }
+            checkedBlocks.add(current);
+
+            // If it's not a log or leaves, skip
+            if (!LOGS.contains(current.getType()) && !LEAVES.contains(current.getType())) {
+                continue;
+            }
+
+            // Check if this is a floating block
+            if (isFloating(current)) {
+                current.breakNaturally();
+            }
+
+            // Add adjacent blocks to check
+            for (BlockFace face : new BlockFace[]{BlockFace.UP, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
+                Block relative = current.getRelative(face);
+                if (!checkedBlocks.contains(relative)) {
+                    blocksToCheck.add(relative);
+                }
+            }
+        }
+    }
+
+    private boolean isFloating(Block block) {
+        // If it's a log, check if it's connected to the ground
+        if (LOGS.contains(block.getType())) {
+            Block below = block.getRelative(BlockFace.DOWN);
+            while (LOGS.contains(below.getType())) {
+                below = below.getRelative(BlockFace.DOWN);
+            }
+            return !(below.getType() == Material.DIRT || below.getType() == Material.GRASS_BLOCK);
+        }
+        
+        // If it's leaves, check if it's too far from any log
+        if (LEAVES.contains(block.getType())) {
+            return !hasNearbyLog(block, 5);
+        }
+        
+        return false;
+    }
+
+    private boolean hasNearbyLog(Block block, int radius) {
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    Block relative = block.getRelative(x, y, z);
+                    if (LOGS.contains(relative.getType())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 } 
