@@ -1,0 +1,4 @@
+# TreeMaintainer Configuration
+
+# Enable debug logging
+debug: false 
