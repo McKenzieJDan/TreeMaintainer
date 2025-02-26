@@ -2,7 +2,7 @@
 
 A Minecraft Spigot plugin that automatically maintains trees by replanting saplings and removing floating parts, creating a more natural and tidy environment.
 
-[![SpigotMC](https://img.shields.io/badge/SpigotMC-TreeMaintainer-orange)](https://www.spigotmc.org/resources/)
+[![SpigotMC](https://img.shields.io/badge/SpigotMC-TreeMaintainer-orange)](https://www.spigotmc.org/resources/treemaintainer.122862/)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.com/paypalme/mckenzio)
 
 ## Features
@@ -18,7 +18,7 @@ A Minecraft Spigot plugin that automatically maintains trees by replanting sapli
 
 ## Installation
 
-1. Download the latest release from [Spigot](https://www.spigotmc.org/resources/) or [GitHub Releases](https://github.com/McKenzieJDan/TreeMaintainer/releases)
+1. Download the latest release from [Spigot](https://www.spigotmc.org/resources/treemaintainer.122862/) or [GitHub Releases](https://github.com/McKenzieJDan/TreeMaintainer/releases)
 2. Place the JAR file in your server's `plugins` folder
 3. Restart your server
 4. Configure the plugin in the `config.yml` file
