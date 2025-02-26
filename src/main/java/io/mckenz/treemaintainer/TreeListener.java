@@ -49,6 +49,11 @@ public class TreeListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        // Check if plugin is enabled
+        if (!plugin.isPluginEnabled()) {
+            return;
+        }
+        
         Block block = event.getBlock();
         
         // Check if the broken block is a log
@@ -56,16 +61,17 @@ public class TreeListener implements Listener {
             return;
         }
 
-        // Skip jungle trees entirely
-        if (block.getType() == Material.JUNGLE_LOG) {
-            plugin.debug("Jungle tree detected - skipping processing");
+        // Check if this tree type is enabled
+        String treeType = getTreeType(block.getType());
+        if (!plugin.isTreeTypeEnabled(treeType)) {
+            plugin.debug(treeType + " tree type is disabled - skipping processing");
             return;
         }
         
         // Check if player is using an axe
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
-        if (!isAxe(tool.getType())) {
-            plugin.debug("Not using an axe - skipping floating tree removal");
+        if (plugin.isRequireAxe() && !isAxe(tool.getType())) {
+            plugin.debug("Not using an axe - skipping tree processing");
             return;
         }
 
@@ -81,15 +87,17 @@ public class TreeListener implements Listener {
         // Store the location for replanting
         Location plantLocation = block.getLocation();
 
-        // Wait longer before checking for saplings and potentially replanting
-        // This gives time for leaves to decay and drop saplings naturally
-        int plantCheckDelay = 60; // 3 seconds (60 ticks)
-        plugin.debug("Will check for saplings in " + (plantCheckDelay/20.0) + " seconds");
+        // Only schedule replanting if enabled
+        if (plugin.isReplantingEnabled()) {
+            // Use the configured delay (already in ticks)
+            int plantCheckDelay = plugin.getReplantingDelay();
+            plugin.debug("Will check for saplings in " + (plantCheckDelay/20.0) + " seconds");
 
-        // Schedule the replanting task
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            checkAndReplant(plantLocation, logType);
-        }, plantCheckDelay);
+            // Schedule the replanting task
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                checkAndReplant(plantLocation, logType);
+            }, plantCheckDelay);
+        }
 
         // Handle floating tree parts immediately
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -590,5 +598,19 @@ public class TreeListener implements Listener {
             || type == Material.PODZOL 
             || type == Material.COARSE_DIRT
             || type == Material.ROOTED_DIRT;
+    }
+
+    private String getTreeType(Material logType) {
+        switch (logType) {
+            case OAK_LOG: return "oak";
+            case BIRCH_LOG: return "birch";
+            case SPRUCE_LOG: return "spruce";
+            case JUNGLE_LOG: return "jungle";
+            case ACACIA_LOG: return "acacia";
+            case DARK_OAK_LOG: return "dark_oak";
+            case MANGROVE_LOG: return "mangrove";
+            case CHERRY_LOG: return "cherry";
+            default: return null;
+        }
     }
 } 

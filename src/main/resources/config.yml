@@ -1,4 +1,65 @@
+# ======================================
 # TreeMaintainer Configuration
+# ======================================
+# Plugin Version: ${project.version}
+# 
+# This configuration file controls all aspects of the TreeMaintainer plugin.
+# For support or questions, visit: https://github.com/McKenzieJDan/Tree-Maintainer
 
-# Enable debug logging
+# ======================================
+# General Settings
+# ======================================
+
+# Master switch to enable or disable the plugin
+enabled: true
+
+# ======================================
+# Tree Maintenance Settings
+# ======================================
+
+# Auto-replant settings
+replanting:
+  # Enable automatic sapling replanting
+  enabled: true
+  
+  # Delay in ticks before replanting (20 ticks = 1 second)
+  delay: 5
+
+# Floating tree parts cleanup
+cleanup:
+  # Enable removal of floating logs and leaves
+  enabled: true
+  
+  # Maximum distance to check for connected blocks
+  max-distance: 10
+
+# Tool settings
+tools:
+  # Only trigger the plugin when trees are cut with axes
+  require-axe: true
+  
+  # Respect tool efficiency enchantments
+  respect-efficiency: true
+
+# ======================================
+# Tree Type Settings
+# ======================================
+
+# Enable/disable specific tree types
+tree-types:
+  oak: true
+  spruce: true
+  birch: true
+  acacia: true
+  dark_oak: true
+  mangrove: true
+  cherry: true
+  jungle: false
+
+# ======================================
+# Advanced Settings
+# ======================================
+
+# Debug mode - when enabled, additional information will be printed to the console
+# Only enable this when troubleshooting issues
 debug: false 
