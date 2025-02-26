@@ -18,7 +18,7 @@ A Minecraft Spigot plugin that automatically maintains trees by replanting sapli
 
 ## Installation
 
-1. Download the latest release from [Spigot](https://www.spigotmc.org/resources/) or [GitHub Releases](https://github.com/McKenzieJDan/Tree-Maintainer/releases)
+1. Download the latest release from [Spigot](https://www.spigotmc.org/resources/) or [GitHub Releases](https://github.com/McKenzieJDan/TreeMaintainer/releases)
 2. Place the JAR file in your server's `plugins` folder
 3. Restart your server
 4. Configure the plugin in the `config.yml` file
