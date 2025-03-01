@@ -6,7 +6,7 @@
 
     <groupId>io.mckenz</groupId>
     <artifactId>TreeMaintainer</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
     <name>TreeMaintainer</name>

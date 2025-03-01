@@ -32,6 +32,10 @@ cleanup:
   
   # Maximum distance to check for connected blocks
   max-distance: 10
+  
+  # Enhanced handling for large trees (especially oak)
+  # This will perform additional passes to ensure all logs are removed
+  large-trees: true
 
 # Tool settings
 tools:
@@ -46,6 +50,8 @@ tools:
 # ======================================
 
 # Enable/disable specific tree types
+# Note: Jungle, Dark Oak, and Spruce trees can grow as 2x2 trees
+# and will be properly detected and replanted in a 2x2 pattern
 tree-types:
   oak: true
   spruce: true
@@ -54,7 +60,7 @@ tree-types:
   dark_oak: true
   mangrove: true
   cherry: true
-  jungle: false
+  jungle: true
 
 # ======================================
 # Update Checker Settings

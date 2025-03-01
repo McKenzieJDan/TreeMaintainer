@@ -27,6 +27,7 @@ public class TreeMaintainer extends JavaPlugin {
     private int replantingDelay;
     private boolean cleanupEnabled;
     private int cleanupMaxDistance;
+    private boolean cleanupLargeTrees;
     private boolean requireAxe;
     private boolean respectEfficiency;
     private Map<String, Boolean> enabledTreeTypes;
@@ -127,6 +128,7 @@ public class TreeMaintainer extends JavaPlugin {
             
             cleanupEnabled = getConfig().getBoolean("cleanup.enabled", true);
             cleanupMaxDistance = getConfig().getInt("cleanup.max-distance", 10);
+            cleanupLargeTrees = getConfig().getBoolean("cleanup.large-trees", true);
             
             requireAxe = getConfig().getBoolean("tools.require-axe", true);
             respectEfficiency = getConfig().getBoolean("tools.respect-efficiency", true);
@@ -210,6 +212,10 @@ public class TreeMaintainer extends JavaPlugin {
 
     public int getCleanupMaxDistance() {
         return cleanupMaxDistance;
+    }
+
+    public boolean isCleanupLargeTrees() {
+        return cleanupLargeTrees;
     }
 
     public boolean isRequireAxe() {

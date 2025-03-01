@@ -1,6 +1,7 @@
 package io.mckenz.treemaintainer.services.impl;
 
 import io.mckenz.treemaintainer.TreeMaintainer;
+import io.mckenz.treemaintainer.models.TreeType;
 import io.mckenz.treemaintainer.services.CleanupService;
 import io.mckenz.treemaintainer.services.TreeDetectionService;
 
@@ -31,8 +32,23 @@ public class CleanupServiceImpl implements CleanupService {
                 return 0;
             }
             
+            // First pass: clean up floating logs
             int logsRemoved = cleanupFloatingLogs(startBlock);
+            
+            // Second pass: clean up floating leaves
             int leavesRemoved = cleanupFloatingLeaves(startBlock);
+            
+            // For oak trees, do an additional pass to catch any missed logs
+            TreeType treeType = TreeType.fromLogMaterial(startBlock.getType());
+            if (treeType == TreeType.OAK && plugin.isCleanupLargeTrees()) {
+                // Wait a tick to let the first pass complete
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                    int additionalLogs = cleanupFloatingLogs(startBlock);
+                    if (additionalLogs > 0) {
+                        plugin.debug("Second pass removed " + additionalLogs + " additional floating oak logs");
+                    }
+                }, 1L);
+            }
             
             return logsRemoved + leavesRemoved;
         } catch (Exception e) {

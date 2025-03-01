@@ -1,7 +1,6 @@
 package io.mckenz.treemaintainer.utils;
 
 import io.mckenz.treemaintainer.TreeMaintainer;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,8 +11,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.logging.Level;
+import java.net.URISyntaxException;
 
 /**
  * Utility class for checking for plugin updates.
@@ -42,7 +43,7 @@ public class UpdateChecker implements Listener {
      * Check for updates
      */
     public void checkForUpdates() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 String currentVersion = plugin.getDescription().getVersion();
                 latestVersion = fetchLatestVersion();
@@ -72,7 +73,8 @@ public class UpdateChecker implements Listener {
      */
     private String fetchLatestVersion() {
         try {
-            URL url = new URL("https://api.spigotmc.org/legacy/update.php?resource=" + resourceId);
+            URI uri = new URI("https://api.spigotmc.org/legacy/update.php?resource=" + resourceId);
+            URL url = uri.toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);
@@ -84,13 +86,14 @@ public class UpdateChecker implements Listener {
                     return reader.readLine();
                 }
             } else {
-                plugin.getLogger().warning("Failed to check for updates. Response code: " + responseCode);
-                return null;
+                plugin.getLogger().warning("Failed to check for updates: HTTP response code " + responseCode);
             }
+        } catch (URISyntaxException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to create URI for update check", e);
         } catch (IOException e) {
-            plugin.getLogger().log(Level.WARNING, "Failed to check for updates: " + e.getMessage(), e);
-            return null;
+            plugin.getLogger().log(Level.WARNING, "Failed to check for updates", e);
         }
+        return null;
     }
 
     /**
@@ -119,7 +122,7 @@ public class UpdateChecker implements Listener {
         
         // Only notify players with permission
         if (updateAvailable && player.hasPermission("treemaintainer.update")) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 player.sendMessage(ChatColor.GREEN + "[TreeMaintainer] " + ChatColor.YELLOW + "A new update is available: " + 
                                   ChatColor.WHITE + latestVersion + ChatColor.YELLOW + " (Current: " + 
                                   ChatColor.WHITE + plugin.getDescription().getVersion() + ChatColor.YELLOW + ")");
