@@ -85,12 +85,21 @@ public class TreeDetectionServiceImpl implements TreeDetectionService {
                 return Collections.emptySet();
             }
 
-            // For large oak trees, we need a more thorough search
+            // For large oak trees and 2x2 trees, we need a more thorough search
             boolean isOak = treeType == TreeType.OAK;
+            boolean isJungle = treeType == TreeType.JUNGLE;
             boolean is2x2Capable = treeType.canGrowAs2x2();
             
             // Use a larger effective distance for oak trees and 2x2 trees
-            int effectiveMaxDistance = (isOak || is2x2Capable) ? Math.max(maxDistance * 2, 100) : maxDistance;
+            // Jungle trees can be extremely tall, so use an even larger distance
+            int effectiveMaxDistance = maxDistance;
+            if (isOak) {
+                effectiveMaxDistance = Math.max(maxDistance * 2, 100);
+            } else if (isJungle) {
+                effectiveMaxDistance = Math.max(maxDistance * 3, 200); // Jungle trees can be very tall
+            } else if (is2x2Capable) {
+                effectiveMaxDistance = Math.max(maxDistance * 2, 100);
+            }
             
             Set<Block> connectedLogs = new HashSet<>();
             Queue<Block> queue = new LinkedList<>();
@@ -107,6 +116,31 @@ public class TreeDetectionServiceImpl implements TreeDetectionService {
             } else {
                 queue.add(startBlock);
                 visited.add(startBlock);
+            }
+            
+            // For jungle trees, also check a wider area above the starting block
+            if (isJungle) {
+                // Check up to 30 blocks above for jungle trees
+                for (int y = 1; y <= 30; y++) {
+                    Block above = startBlock.getRelative(0, y, 0);
+                    if (TreeType.fromLogMaterial(above.getType()) == treeType) {
+                        if (!visited.contains(above)) {
+                            visited.add(above);
+                            queue.add(above);
+                            plugin.debug("Added jungle log at height +" + y + " to search queue");
+                        }
+                    } else if (y > 5) {
+                        // If we haven't found a log for 5 blocks, stop searching upward
+                        boolean foundLog = false;
+                        for (int i = 1; i <= 5; i++) {
+                            if (TreeType.fromLogMaterial(startBlock.getRelative(0, y-i, 0).getType()) == treeType) {
+                                foundLog = true;
+                                break;
+                            }
+                        }
+                        if (!foundLog) break;
+                    }
+                }
             }
             
             while (!queue.isEmpty() && connectedLogs.size() < effectiveMaxDistance) {
@@ -169,8 +203,27 @@ public class TreeDetectionServiceImpl implements TreeDetectionService {
                                 }
                             }
                         }
+                        
+                        // For jungle trees, check even further in all directions
+                        if (isJungle) {
+                            // Check two blocks out in each direction
+                            for (BlockFace face : ALL_FACES) {
+                                Block twoAway = current.getRelative(face).getRelative(face);
+                                if (!visited.contains(twoAway)) {
+                                    visited.add(twoAway);
+                                    if (TreeType.fromLogMaterial(twoAway.getType()) == treeType) {
+                                        queue.add(twoAway);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+            }
+            
+            // If we hit the max distance and this is a jungle tree, log a warning
+            if (connectedLogs.size() >= effectiveMaxDistance && isJungle) {
+                plugin.getLogger().warning("Hit maximum search distance for jungle tree. Some logs may not be detected. Consider increasing cleanup_max_distance in config.");
             }
             
             plugin.debug("Found " + connectedLogs.size() + " connected logs for " + treeType.getConfigName() + " tree");
