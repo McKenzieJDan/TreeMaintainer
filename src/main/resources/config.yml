@@ -57,6 +57,22 @@ tree-types:
   jungle: false
 
 # ======================================
+# Update Checker Settings
+# ======================================
+
+# Enable the update checker
+update-checker:
+  # Enable or disable the update checker
+  enabled: true
+  
+  # The SpigotMC resource ID for the plugin
+  # https://www.spigotmc.org/resources/treemaintainer.122862/
+  resource-id: 122862
+  
+  # Notify admins when they join if an update is available
+  notify-admins: true
+
+# ======================================
 # Advanced Settings
 # ======================================
 

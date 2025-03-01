@@ -1,7 +1,25 @@
 package io.mckenz.treemaintainer;
 
+import io.mckenz.treemaintainer.commands.TreeMaintainerCommand;
+import io.mckenz.treemaintainer.listeners.TreeBreakListener;
+import io.mckenz.treemaintainer.models.TreeType;
+import io.mckenz.treemaintainer.services.CleanupService;
+import io.mckenz.treemaintainer.services.ReplantingService;
+import io.mckenz.treemaintainer.services.TreeDetectionService;
+import io.mckenz.treemaintainer.services.impl.CleanupServiceImpl;
+import io.mckenz.treemaintainer.services.impl.ReplantingServiceImpl;
+import io.mckenz.treemaintainer.services.impl.TreeDetectionServiceImpl;
+import io.mckenz.treemaintainer.utils.UpdateChecker;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+
+/**
+ * Main plugin class for TreeMaintainer.
+ */
 public class TreeMaintainer extends JavaPlugin {
     private boolean enabled;
     private boolean debug;
@@ -11,58 +29,162 @@ public class TreeMaintainer extends JavaPlugin {
     private int cleanupMaxDistance;
     private boolean requireAxe;
     private boolean respectEfficiency;
-    private boolean oakEnabled;
-    private boolean spruceEnabled;
-    private boolean birchEnabled;
-    private boolean acaciaEnabled;
-    private boolean darkOakEnabled;
-    private boolean mangroveEnabled;
-    private boolean cherryEnabled;
-    private boolean jungleEnabled;
+    private Map<String, Boolean> enabledTreeTypes;
+    
+    // Update checker settings
+    private boolean updateCheckerEnabled;
+    private int updateCheckerResourceId;
+    private boolean updateCheckerNotifyAdmins;
+    
+    // Services
+    private TreeDetectionService treeDetectionService;
+    private ReplantingService replantingService;
+    private CleanupService cleanupService;
+    private UpdateChecker updateChecker;
 
     @Override
     public void onEnable() {
-        // Save default config if it doesn't exist
-        saveDefaultConfig();
-        
-        // Load config values
-        loadConfig();
-        
-        // Register our event listener
-        getServer().getPluginManager().registerEvents(new TreeListener(this), this);
-        getLogger().info("TreeMaintainer has been enabled!");
+        try {
+            // Save default config if it doesn't exist
+            saveDefaultConfig();
+            
+            // Load config values
+            loadConfig();
+            
+            // Initialize services
+            initializeServices();
+            
+            // Register our event listener
+            registerListeners();
+            
+            // Register commands
+            registerCommands();
+            
+            // Initialize update checker
+            initializeUpdateChecker();
+            
+            getLogger().info("TreeMaintainer has been enabled!");
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error enabling TreeMaintainer: " + e.getMessage(), e);
+            getServer().getPluginManager().disablePlugin(this);
+        }
+    }
+
+    private void initializeServices() {
+        try {
+            treeDetectionService = new TreeDetectionServiceImpl(this);
+            replantingService = new ReplantingServiceImpl(this);
+            cleanupService = new CleanupServiceImpl(this, treeDetectionService);
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error initializing services: " + e.getMessage(), e);
+            throw e; // Re-throw to be caught by onEnable
+        }
+    }
+    
+    private void registerListeners() {
+        try {
+            getServer().getPluginManager().registerEvents(
+                new TreeBreakListener(this, treeDetectionService, replantingService, cleanupService), 
+                this
+            );
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error registering event listeners: " + e.getMessage(), e);
+            throw e; // Re-throw to be caught by onEnable
+        }
+    }
+    
+    private void registerCommands() {
+        try {
+            TreeMaintainerCommand command = new TreeMaintainerCommand(this);
+            getCommand("treemaintainer").setExecutor(command);
+            getCommand("treemaintainer").setTabCompleter(command);
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error registering commands: " + e.getMessage(), e);
+            throw e; // Re-throw to be caught by onEnable
+        }
+    }
+    
+    private void initializeUpdateChecker() {
+        try {
+            if (updateCheckerEnabled) {
+                updateChecker = new UpdateChecker(this, updateCheckerResourceId);
+                updateChecker.checkForUpdates();
+            }
+        } catch (Exception e) {
+            getLogger().log(Level.WARNING, "Error initializing update checker: " + e.getMessage(), e);
+            // Don't re-throw, as update checker is not critical
+        }
     }
 
     private void loadConfig() {
-        enabled = getConfig().getBoolean("enabled", true);
-        debug = getConfig().getBoolean("debug", false);
-        
-        // Tree Maintenance Settings
-        replantingEnabled = getConfig().getBoolean("replanting.enabled", true);
-        replantingDelay = getConfig().getInt("replanting.delay", 5);
-        
-        cleanupEnabled = getConfig().getBoolean("cleanup.enabled", true);
-        cleanupMaxDistance = getConfig().getInt("cleanup.max-distance", 10);
-        
-        requireAxe = getConfig().getBoolean("tools.require-axe", true);
-        respectEfficiency = getConfig().getBoolean("tools.respect-efficiency", true);
-        
-        // Tree Type Settings
-        oakEnabled = getConfig().getBoolean("tree-types.oak", true);
-        spruceEnabled = getConfig().getBoolean("tree-types.spruce", true);
-        birchEnabled = getConfig().getBoolean("tree-types.birch", true);
-        acaciaEnabled = getConfig().getBoolean("tree-types.acacia", true);
-        darkOakEnabled = getConfig().getBoolean("tree-types.dark_oak", true);
-        mangroveEnabled = getConfig().getBoolean("tree-types.mangrove", true);
-        cherryEnabled = getConfig().getBoolean("tree-types.cherry", true);
-        jungleEnabled = getConfig().getBoolean("tree-types.jungle", false);
+        try {
+            enabled = getConfig().getBoolean("enabled", true);
+            debug = getConfig().getBoolean("debug", false);
+            
+            // Tree Maintenance Settings
+            replantingEnabled = getConfig().getBoolean("replanting.enabled", true);
+            replantingDelay = getConfig().getInt("replanting.delay", 5);
+            
+            cleanupEnabled = getConfig().getBoolean("cleanup.enabled", true);
+            cleanupMaxDistance = getConfig().getInt("cleanup.max-distance", 10);
+            
+            requireAxe = getConfig().getBoolean("tools.require-axe", true);
+            respectEfficiency = getConfig().getBoolean("tools.respect-efficiency", true);
+            
+            // Update Checker Settings
+            updateCheckerEnabled = getConfig().getBoolean("update-checker.enabled", true);
+            updateCheckerResourceId = getConfig().getInt("update-checker.resource-id", 122862);
+            updateCheckerNotifyAdmins = getConfig().getBoolean("update-checker.notify-admins", true);
+            
+            // Tree Type Settings
+            enabledTreeTypes = new HashMap<>();
+            for (TreeType treeType : TreeType.values()) {
+                String configName = treeType.getConfigName();
+                boolean defaultValue = configName.equals("jungle") ? false : true;
+                enabledTreeTypes.put(configName, getConfig().getBoolean("tree-types." + configName, defaultValue));
+            }
+            
+            getLogger().info("Configuration loaded successfully");
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error loading configuration: " + e.getMessage(), e);
+            throw e; // Re-throw to be caught by onEnable
+        }
+    }
+    
+    /**
+     * Reload the plugin configuration
+     */
+    public void reloadPluginConfig() {
+        try {
+            reloadConfig();
+            loadConfig();
+            
+            // Re-initialize update checker if needed
+            if (updateCheckerEnabled && (updateChecker == null)) {
+                initializeUpdateChecker();
+            }
+            
+            getLogger().info("Configuration reloaded!");
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error reloading configuration: " + e.getMessage(), e);
+            throw e; // Re-throw to be caught by command handler
+        }
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("TreeMaintainer has been disabled!");
+        try {
+            // Perform any cleanup if needed
+            getLogger().info("TreeMaintainer has been disabled!");
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error disabling TreeMaintainer: " + e.getMessage(), e);
+        }
     }
 
+    /**
+     * Log a debug message if debug mode is enabled
+     * @param message The message to log
+     */
     public void debug(String message) {
         if (debug) {
             getLogger().info("[Debug] " + message);
@@ -99,16 +221,31 @@ public class TreeMaintainer extends JavaPlugin {
     }
 
     public boolean isTreeTypeEnabled(String treeType) {
-        switch (treeType) {
-            case "oak": return oakEnabled;
-            case "spruce": return spruceEnabled;
-            case "birch": return birchEnabled;
-            case "acacia": return acaciaEnabled;
-            case "dark_oak": return darkOakEnabled;
-            case "mangrove": return mangroveEnabled;
-            case "cherry": return cherryEnabled;
-            case "jungle": return jungleEnabled;
-            default: return false;
-        }
+        return enabledTreeTypes.getOrDefault(treeType, false);
+    }
+    
+    public boolean isUpdateCheckerEnabled() {
+        return updateCheckerEnabled;
+    }
+    
+    public boolean isUpdateCheckerNotifyAdmins() {
+        return updateCheckerNotifyAdmins;
+    }
+    
+    // Service getters
+    public TreeDetectionService getTreeDetectionService() {
+        return treeDetectionService;
+    }
+    
+    public ReplantingService getReplantingService() {
+        return replantingService;
+    }
+    
+    public CleanupService getCleanupService() {
+        return cleanupService;
+    }
+    
+    public UpdateChecker getUpdateChecker() {
+        return updateChecker;
     }
 } 

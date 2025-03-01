@@ -2,4 +2,28 @@ name: TreeMaintainer
 version: '${project.version}'
 main: io.mckenz.treemaintainer.TreeMaintainer
 api-version: 1.21
-description: Automatically replants trees and removes floating trees 
+description: Automatically replants trees and removes floating trees
+
+commands:
+  treemaintainer:
+    description: Main command for TreeMaintainer plugin
+    usage: /<command> [reload|enable|disable|info]
+    aliases: [tm]
+    permission: treemaintainer.command
+
+permissions:
+  treemaintainer.command:
+    description: Allows access to the base TreeMaintainer command
+    default: true
+  treemaintainer.reload:
+    description: Allows reloading the plugin configuration
+    default: op
+  treemaintainer.toggle:
+    description: Allows enabling/disabling the plugin
+    default: op
+  treemaintainer.info:
+    description: Allows viewing plugin information
+    default: true
+  treemaintainer.update:
+    description: Allows receiving update notifications
+    default: op 

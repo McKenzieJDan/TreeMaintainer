@@ -32,6 +32,23 @@ When a player cuts a tree with an axe:
 2. After the tree is cut, a sapling is automatically replanted
 3. Any floating logs or leaves are cleaned up naturally
 
+### Commands
+
+- `/treemaintainer` or `/tm` - Shows available commands
+- `/tm reload` - Reloads the configuration
+- `/tm enable` - Enables the plugin
+- `/tm disable` - Disables the plugin
+- `/tm info` - Shows plugin information
+- `/tm update` - Checks for updates
+
+### Permissions
+
+- `treemaintainer.command` - Access to the base command (default: true)
+- `treemaintainer.reload` - Permission to reload the plugin (default: op)
+- `treemaintainer.toggle` - Permission to enable/disable the plugin (default: op)
+- `treemaintainer.info` - Permission to view plugin information (default: true)
+- `treemaintainer.update` - Permission to check for updates and receive notifications (default: op)
+
 ## Configuration
 
 The plugin's configuration file (`config.yml`) is organized into logical sections:
@@ -74,6 +91,17 @@ tree-types:
   mangrove: true
   cherry: true
   jungle: false
+
+# Update checker settings
+update-checker:
+  # Enable or disable the update checker
+  enabled: true
+  
+  # The SpigotMC resource ID for the plugin
+  resource-id: 122862
+  
+  # Notify admins when they join if an update is available
+  notify-admins: true
 
 # Debug mode for troubleshooting
 debug: false
