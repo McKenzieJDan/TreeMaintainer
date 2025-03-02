@@ -53,13 +53,17 @@ public class UpdateChecker implements Listener {
                     return;
                 }
                 
-                // Compare versions (simple string comparison, could be improved)
-                if (!currentVersion.equals(latestVersion)) {
+                // Normalize versions for comparison
+                String normalizedCurrent = normalizeVersion(currentVersion);
+                String normalizedLatest = normalizeVersion(latestVersion);
+                
+                if (!normalizedCurrent.equalsIgnoreCase(normalizedLatest)) {
                     updateAvailable = true;
-                    plugin.getLogger().info("A new update is available: " + latestVersion + " (Current: " + currentVersion + ")");
-                    plugin.getLogger().info("Download it at: https://www.spigotmc.org/resources/" + resourceId);
+                    plugin.getLogger().info("A new update is available: v" + latestVersion);
+                    plugin.getLogger().info("You are currently running: v" + currentVersion);
+                    plugin.getLogger().info("Download the latest version from: https://www.spigotmc.org/resources/" + resourceId);
                 } else {
-                    plugin.getLogger().info("You are running the latest version: " + currentVersion);
+                    plugin.getLogger().info("You are running the latest version: v" + currentVersion);
                 }
             } catch (Exception e) {
                 plugin.getLogger().log(Level.WARNING, "Failed to check for updates: " + e.getMessage(), e);
@@ -95,6 +99,26 @@ public class UpdateChecker implements Listener {
         }
         return null;
     }
+    
+    /**
+     * Normalize a version string for comparison
+     * @param version The version string to normalize
+     * @return The normalized version string
+     */
+    private String normalizeVersion(String version) {
+        // Remove 'v' prefix if present
+        if (version.startsWith("v")) {
+            version = version.substring(1);
+        }
+        
+        // Remove any suffixes like -RELEASE, -SNAPSHOT, etc.
+        int dashIndex = version.indexOf('-');
+        if (dashIndex > 0) {
+            version = version.substring(0, dashIndex);
+        }
+        
+        return version.trim();
+    }
 
     /**
      * Check if an update is available
@@ -124,8 +148,8 @@ public class UpdateChecker implements Listener {
         if (updateAvailable && player.hasPermission("treemaintainer.update")) {
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 player.sendMessage(ChatColor.GREEN + "[TreeMaintainer] " + ChatColor.YELLOW + "A new update is available: " + 
-                                  ChatColor.WHITE + latestVersion + ChatColor.YELLOW + " (Current: " + 
-                                  ChatColor.WHITE + plugin.getDescription().getVersion() + ChatColor.YELLOW + ")");
+                                  ChatColor.WHITE + "v" + latestVersion + ChatColor.YELLOW + " (Current: " + 
+                                  ChatColor.WHITE + "v" + plugin.getDescription().getVersion() + ChatColor.YELLOW + ")");
                 player.sendMessage(ChatColor.GREEN + "[TreeMaintainer] " + ChatColor.YELLOW + "Download it at: " + 
                                   ChatColor.WHITE + "https://www.spigotmc.org/resources/" + resourceId);
             }, 40L); // Delay for 2 seconds after join
