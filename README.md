@@ -2,6 +2,8 @@
 
 A Minecraft Spigot plugin that automatically maintains trees by replanting saplings and removing floating parts, creating a more natural and tidy environment.
 
+[![Java](https://img.shields.io/badge/Java-21-red.svg)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.4-green.svg)](https://www.minecraft.net/)
 [![SpigotMC](https://img.shields.io/badge/SpigotMC-TreeMaintainer-orange)](https://www.spigotmc.org/resources/treemaintainer.122862/)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.com/paypalme/mckenzio)
 
