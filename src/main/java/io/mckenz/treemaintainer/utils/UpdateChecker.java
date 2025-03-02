@@ -1,6 +1,7 @@
 package io.mckenz.treemaintainer.utils;
 
 import io.mckenz.treemaintainer.TreeMaintainer;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -23,20 +24,25 @@ public class UpdateChecker implements Listener {
 
     private final TreeMaintainer plugin;
     private final int resourceId;
-    private String latestVersion;
+    private final boolean notifyAdmins;
     private boolean updateAvailable = false;
+    private String latestVersion = null;
 
     /**
      * Create a new update checker
      * @param plugin The plugin instance
      * @param resourceId The SpigotMC resource ID
+     * @param notifyAdmins Whether to notify admins when they join
      */
-    public UpdateChecker(TreeMaintainer plugin, int resourceId) {
+    public UpdateChecker(TreeMaintainer plugin, int resourceId, boolean notifyAdmins) {
         this.plugin = plugin;
         this.resourceId = resourceId;
+        this.notifyAdmins = notifyAdmins;
         
         // Register the join event listener
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        if (this.notifyAdmins) {
+            plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        }
     }
 
     /**
@@ -53,11 +59,22 @@ public class UpdateChecker implements Listener {
                     return;
                 }
                 
+                // Debug log the raw versions
+                plugin.debug("Raw current version: " + currentVersion);
+                plugin.debug("Raw latest version: " + latestVersion);
+                
                 // Normalize versions for comparison
                 String normalizedCurrent = normalizeVersion(currentVersion);
                 String normalizedLatest = normalizeVersion(latestVersion);
                 
-                if (!normalizedCurrent.equalsIgnoreCase(normalizedLatest)) {
+                // Debug log the normalized versions
+                plugin.debug("Normalized current version: " + normalizedCurrent);
+                plugin.debug("Normalized latest version: " + normalizedLatest);
+                
+                // Compare versions using semantic versioning
+                boolean isNewer = isNewerVersion(normalizedLatest, normalizedCurrent);
+                
+                if (isNewer) {
                     updateAvailable = true;
                     plugin.getLogger().info("A new update is available: v" + latestVersion);
                     plugin.getLogger().info("You are currently running: v" + currentVersion);
@@ -75,7 +92,7 @@ public class UpdateChecker implements Listener {
      * Fetch the latest version from SpigotMC API
      * @return The latest version string or null if the check failed
      */
-    private String fetchLatestVersion() {
+    private String fetchLatestVersion() throws IOException {
         try {
             URI uri = new URI("https://api.spigotmc.org/legacy/update.php?resource=" + resourceId);
             URL url = uri.toURL();
@@ -94,10 +111,48 @@ public class UpdateChecker implements Listener {
             }
         } catch (URISyntaxException e) {
             plugin.getLogger().log(Level.WARNING, "Failed to create URI for update check", e);
-        } catch (IOException e) {
-            plugin.getLogger().log(Level.WARNING, "Failed to check for updates", e);
         }
         return null;
+    }
+    
+    /**
+     * Compare two version strings for equality
+     * 
+     * @param version1 The first version string
+     * @param version2 The second version string
+     * @return True if the versions are equal, false otherwise
+     */
+    private boolean versionsEqual(String version1, String version2) {
+        // Simple string comparison after normalization
+        return version1.equals(version2);
+    }
+    
+    /**
+     * Check if version1 is newer than version2
+     * 
+     * @param version1 The version to check
+     * @param version2 The version to compare against
+     * @return True if version1 is newer than version2
+     */
+    private boolean isNewerVersion(String version1, String version2) {
+        String[] v1Parts = version1.split("\\.");
+        String[] v2Parts = version2.split("\\.");
+        
+        // Compare each part of the version
+        int length = Math.max(v1Parts.length, v2Parts.length);
+        for (int i = 0; i < length; i++) {
+            int v1Part = i < v1Parts.length ? Integer.parseInt(v1Parts[i]) : 0;
+            int v2Part = i < v2Parts.length ? Integer.parseInt(v2Parts[i]) : 0;
+            
+            if (v1Part > v2Part) {
+                return true;
+            } else if (v1Part < v2Part) {
+                return false;
+            }
+        }
+        
+        // Versions are equal
+        return false;
     }
     
     /**
@@ -106,8 +161,8 @@ public class UpdateChecker implements Listener {
      * @return The normalized version string
      */
     private String normalizeVersion(String version) {
-        // Remove 'v' prefix if present
-        if (version.startsWith("v")) {
+        // Remove all 'v' prefixes (handles cases like 'vv1.1.0')
+        while (version.startsWith("v")) {
             version = version.substring(1);
         }
         
@@ -117,7 +172,17 @@ public class UpdateChecker implements Listener {
             version = version.substring(0, dashIndex);
         }
         
-        return version.trim();
+        // Trim any whitespace
+        version = version.trim();
+        
+        // Ensure consistent format for comparison
+        // For example, convert "1.1" to "1.1.0" if needed
+        String[] parts = version.split("\\.");
+        if (parts.length == 2) {
+            version = version + ".0";
+        }
+        
+        return version;
     }
 
     /**

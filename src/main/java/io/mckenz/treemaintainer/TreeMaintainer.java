@@ -108,7 +108,8 @@ public class TreeMaintainer extends JavaPlugin {
     private void initializeUpdateChecker() {
         try {
             if (updateCheckerEnabled) {
-                updateChecker = new UpdateChecker(this, updateCheckerResourceId);
+                boolean notifyAdmins = getConfig().getBoolean("update-checker.notify-admins", true);
+                updateChecker = new UpdateChecker(this, updateCheckerResourceId, notifyAdmins);
                 updateChecker.checkForUpdates();
             }
         } catch (Exception e) {
