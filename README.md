@@ -114,6 +114,11 @@ debug: false
 - Spigot/Paper 1.21.4
 - Java 21+
 
+## Used By
+
+[SuegoFaults](https://suegofaults.com) — A long-running adult Minecraft server where TreeMaintainer keeps forests tidy and regrowth natural without manual cleanup.
+
+
 ## Support
 
 If you find this plugin helpful, consider [buying me a coffee](https://www.paypal.com/paypalme/mckenzio) ☕
